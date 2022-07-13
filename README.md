@@ -1,6 +1,6 @@
 # MemreClub
-A Massive Project That is under heavy development, trying to replicate Midnight Club 3 from scratch
+This Project is under heavy development, Inspired by Midnight Club 3
 
-The Goal of this project is to learn and understand many techniques that I always wondered how they were done as a kid
+The Goal of this project is to learn and understand a lot of techniques that I always wondered how they were done as a kid, making almost everything from scratch
 
-But instead of using something like Unity or Unreal engine on my poor machine (And they are still useful for creating Concepts and learning Game Design when it comes to this game), I'm going to make almost everything from scratch
+I have no idea when this will be finished, most likely never, But hey! at least understanding stuff Is what I care about
