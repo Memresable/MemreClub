@@ -6,5 +6,7 @@ The Goal of this project is to learn and understand a lot of techniques that I a
 I have no idea when this will be finished, most likely never, But hey! at least understanding stuff Is what I care about
 
 Resources currently learning from:
+
 https://vulkan-tutorial.com/Introduction (Vulkan)
+
 https://learnopengl.com/ (OpenGL)

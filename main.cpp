@@ -1,10 +1,9 @@
-/* Created in Date 2022/7/7 time ~10-11am Thursday */
-
 #define GLFW_INCLUDE_VULKAN
-// #include <vulkan/vulkan.hpp> //<--- Think about this later please...
+// #include <vulkan/vulkan.hpp>
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
@@ -183,6 +182,22 @@ VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilites)
     }
 }
 
+static std::vector<char> readFile(const std::string& fileName)
+{
+    std::ifstream file(fileName, std::ios::ate | std::ios::binary);
+    if(!file.is_open())
+        throw std::runtime_error("failed to open the file!");
+
+    size_t fileSize = (size_t)file.tellg();
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+
+    file.close();
+    return buffer;
+}
+
 struct Application
 {
     void run()
@@ -213,26 +228,47 @@ struct Application
         createLogicalDevice();
         createSwapChain();
         createImageViews();
+        createGraphicsPipeLine();
     }
 
-    void cleanup()
+    void createGraphicsPipeLine()
     {
-        for(auto imageview : swapChainImageViews)
-            vkDestroyImageView(device, imageview, nullptr);
-            
-        vkDestroySwapchainKHR(device, swapChain, nullptr);
+        std::vector<char> vertexShaderCode = readFile("vert.spv");
+        std::vector<char> fragmentShaderCode = readFile("frag.spv");
 
-        vkDestroyDevice(device, nullptr);
+        VkShaderModule vertexShaderModule = createShaderModule(vertexShaderCode);
+        VkShaderModule fragmentShaderModule = createShaderModule(fragmentShaderCode);
 
-        if(enableValidationLayers)
-            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+        VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+        vertShaderStageInfo.module = vertexShaderModule;
+        vertShaderStageInfo.pName = "main";
 
-        vkDestroySurfaceKHR(instance, surface, nullptr);
+        VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+        vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        vertShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+        vertShaderStageInfo.module = fragmentShaderModule;
+        vertShaderStageInfo.pName = "main";
 
-        vkDestroyInstance(instance, nullptr);
+        VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
-        glfwDestroyWindow(window);
-        glfwTerminate();
+        vkDestroyShaderModule(device, vertexShaderModule, nullptr);
+        vkDestroyShaderModule(device, fragmentShaderModule, nullptr);
+    }
+    
+    VkShaderModule createShaderModule(const std::vector<char>& code)
+    {
+        VkShaderModuleCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+        createInfo.codeSize = code.size();
+        createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+        VkShaderModule shaderModule;
+        if(vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+            throw std::runtime_error("failed to create the shader module.");
+
+        return shaderModule;
     }
 
     void createImageViews()
@@ -469,6 +505,26 @@ struct Application
         }
     }
 
+    void cleanup()
+    {
+        for(auto imageview : swapChainImageViews)
+            vkDestroyImageView(device, imageview, nullptr);
+            
+        vkDestroySwapchainKHR(device, swapChain, nullptr);
+
+        vkDestroyDevice(device, nullptr);
+
+        if(enableValidationLayers)
+            DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
+
+        vkDestroySurfaceKHR(instance, surface, nullptr);
+
+        vkDestroyInstance(instance, nullptr);
+
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
     void createInstance()
     {
         if(enableValidationLayers && !checkValidationLayerSupport())
@@ -509,7 +565,6 @@ struct Application
         if(vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
             throw std::runtime_error("Failed to Create an Instance!");
 
-        // returns either VK_SUCCESS or VK_FAILURE
         VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
     }
 
